@@ -1,9 +1,10 @@
 const express = require('express');
+const { getAll, submit, removal, update } = require('../models/cowModel.js')
 const readline = require('readline').createInterface({
   input: process.stdin,
   output: process.stdout
 })
-let db;
+let db
 
 const path = require('path');
 
@@ -11,9 +12,64 @@ const PORT = 3000;
 const app = express();
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.json())
 
-app.get('/', (req, res) => {
-  res.send('Hello from the server!');
+app.get('/api/cows', (req, res) => {
+  getAll((err, data) => {
+    if(err) {
+      res.status(400).send('broken')
+    } else [
+      res.status(200).json(data)
+    ]
+  })
+})
+
+app.post('/api/cows', (req, res) => {
+  submit(req.body, (err, data) => {
+    if(err) {
+      res.status(400).send('unable to save')
+    } else {
+      getAll((err, data2) => {
+        if(err) {
+          res.status(400).send('unable to retrieve')
+        } else {
+          res.status(200).json(data2)
+        }
+      })
+    }
+  })
+})
+
+app.put('/api/cows/:id', (req, res) => {
+  update(req.params.id, req.body, (err, data) => {
+    if(err) {
+      res.status(400).send('ID not found')
+    } else {
+      getAll((err, data2) => {
+        if(err) {
+          res.status(400).send('unable to retrieve')
+        } else {
+          res.status(200).json(data2)
+        }
+      })
+    }
+  })
+})
+
+app.delete('/api/cows/:id', (req, res) => {
+  removal(req.params.id, (err, data) => {
+    if(err) {
+      res.status(400).send('Unable to delete')
+    } else {
+      getAll((err, data2) => {
+        if(err) {
+          res.status(400).send('unable to retrieve')
+        } else {
+          res.status(200).json(data2)
+        }
+      })
+    }
+  })
 })
 
 app.listen(PORT, () => {
